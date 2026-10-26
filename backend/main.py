@@ -51,6 +51,7 @@ def get_expenses(
 def get_expense(expense_id: int):
     return services.get_expense(expense_id)
 
+# UPDATE PARTIAL CHANGES
 @app.patch("/expenses/{expense_id}")
 def patch_expense(expense_id: int, request: models.PatchExpense):
     query = "UPDATE expenses SET"
@@ -72,4 +73,25 @@ def patch_expense(expense_id: int, request: models.PatchExpense):
         query += " WHERE expense_id = ?"
         parameters.append(expense_id)
         return services.patch_expense(query, tuple(parameters), expense_id)
+
+# DELETE EXPENSE
+@app.delete("/expenses/{expense_id}")
+def delete_expense(expense_id: int):
+    return services.delete_expense(expense_id)
+
+# GET CATEGORIES FOR CATEGORY DROPDOWN BUTTON
+@app.get("/categories")
+def get_categories():
+    return services.get_categories()
+
+# CREATE NEW CATEGORY
+@app.post("/categories")
+def post_categories(new_category: models.NewCategory):
+    if services.check_category(new_category) == 1:
+        HTTPException(
+            status_code=409,
+            detail="Category already exists!"
+        )
+    else:
+        return services.create_category(new_category)
 

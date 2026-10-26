@@ -14,7 +14,7 @@ def get_category(category_id: int):
     response = cursor.fetchone()
 
     return {
-        "id": response[0],
+        "category_id": response[0],
         "name": response[1]
     }
 
@@ -93,4 +93,80 @@ def patch_expense(query, param, expense_id: int):
     database.db_commit()
 
     return get_expense(expense_id)
+
+def delete_expense(expense_id: int):
+    database.db_init_tables()
+    cursor = database.db_init()
+
+    cursor.execute("SELECT * FROM expenses WHERE expense_id = ?", (expense_id,))
+    check_exist = cursor.fetchone()
+
+    if not check_exist:
+        HTTPException(
+            status_code=404,
+            detail="Expense not found!"
+        )
+    else:
+        cursor.execute("DELETE FROM expenses WHERE expense_id = ?", (expense_id,))
+        database.db_commit()
+
+        return {
+            "expense_id": expense_id,
+            "action": "SUCCESSFULLY deleted!"
+        }
+
+def get_categories():
+    database.db_init_tables()
+    cursor = database.db_init()
+
+    cursor.execute("SELECT * FROM categories")
+    response = cursor.fetchall()
+    categories = []
+
+    if not response:
+        HTTPException(
+            status_code=404,
+            detail="No category to be shown..."
+        )
+    else:
+        for category in response:
+            categories.append(
+                {
+                    "category_id": category[0],
+                    "name": category[1]
+                }
+            )
+
+        return categories
+
+def check_category(category_name):
+    database.db_init_tables()
+    cursor = database.db_init()
+
+    cursor.execute("SELECT * FROM categories WHERE name = ?", (category_name,))
+
+    response = cursor.fetchone()
+    if response:
+        return 1
+    else:
+        return 0
+
+def create_category(category_name):
+    database.db_init_tables()
+    cursor = database.db_init()
+
+    cursor.execute(
+        """INSERT INTO categories (name)
+        VALUES (?)""", (category_name,)
+    )
+    database.db_commit()
+
+    cursor.execute("SELECT * FROM catgeories WHERE category_name = ?", (category_name,))
+
+    response = cursor.fetchone()
+
+    return {
+        "category_id": response[0],
+        "name": response[1]
+    }
 

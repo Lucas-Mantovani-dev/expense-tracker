@@ -10,3 +10,6 @@ class PatchExpense(BaseModel):
     category_id: int | None = None
     description: str | None = None
 
+class NewCategory(BaseModel):
+    name: str
+
