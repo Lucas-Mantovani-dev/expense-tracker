@@ -1,5 +1,5 @@
 import database
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import HTTPException
 
 def get_category(category_id: int):
@@ -170,3 +170,74 @@ def create_category(category_name):
         "name": response[1]
     }
 
+def get_month_data(sotm, now):
+    database.db_init_tables()
+    cursor = database.db_init()
+    cursor.execute(
+        """SELECT amount FROM expenses WHERE date_time >= ? AND date_time < ?""",
+        (sotm, now)
+    )
+
+    response = cursor.fetchall()
+    amount_count = amount_spent = 0
+
+    for amount in response:
+        amount_count += 1
+        amount_spent += amount[0]
+
+    return {
+        "total_spent": amount_spent,
+        "expense_count": amount_count,
+        "average_expense": round((amount_spent/amount_count), 2)
+    }
+
+def get_week_data(now):
+    database.db_init_tables()
+    cursor = database.db_init()
+    today = datetime.now()
+    sunday_start = today - timedelta(days=(today.weekday() + 1) % 7)
+    week_start = sunday_start.strftime('%Y-%m-%d')
+    
+    cursor.execute(
+        """SELECT amount FROM expenses WHERE date_time >= ? AND date_time < ?""",
+        (week_start, now)
+    )
+
+    response = cursor.fetchall()
+    amount_count = amount_spent = 0
+
+    for amount in response:
+        amount_count += 1
+        amount_spent += amount[0]
+
+    return {
+        "total_spent": amount_spent,
+        "expense_count": amount_count,
+        "average_expense": round((amount_spent/amount_count), 2)
+    }
+
+def get_summary_data(
+        query: str,
+        param: tuple,
+        sotm, now
+):
+    database.db_init_tables()
+    cursor = database.db_init()
+
+    cursor.execute(query, param)
+    response = cursor.fetchall() # LIST WITH AMOUNT TUPLES
+    amount_count = amount_spent = 0
+
+    for amount in response:
+        amount_count += 1
+        amount_spent += amount[0]
+
+    return {
+        "filtered_data": {
+            "total_spent": amount_spent,
+            "expense_count": amount_count,
+            "average_expense": round((amount_spent/amount_count), 2)
+        },
+        "month_data": get_month_data(sotm, now),
+        "week_data": get_week_data(now)
+    }

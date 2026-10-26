@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from datetime import datetime
+from datetime import datetime, date
 import models, services
 
 app = FastAPI()
@@ -95,3 +95,41 @@ def post_categories(new_category: models.NewCategory):
     else:
         return services.create_category(new_category)
 
+# RETRIEVES A SUMMARY
+@app.get("/summary")
+def summary(
+    start_date: str | None = None,
+    end_date: str | None = None,
+    category_id: int | None = None
+):
+    now = datetime.now()
+    formatted_str = now.strftime("%Y-%m-%d %H:%M:%S")
+    today = date.today()
+    start_of_month = today.replace(day=1)
+    query = "SELECT amount FROM expenses WHERE 1=1"
+    parameters = []
+
+    if start_date:
+        query += " AND date_time >= ?"
+        parameters.append(start_date)
+
+        if end_date:
+            query += " AND date_time < ?"
+            parameters.append(end_date)
+        else:
+            query += " AND date_time < ?"
+            parameters.append(formatted_str)
+    else:
+        query += " AND date_time >= ?"
+        parameters.append(start_of_month)
+
+        query += " AND date_time < ?"
+        parameters.append(formatted_str)
+
+    if category_id:
+        query += " AND category_id = ?"
+        parameters.append(category_id)
+
+    query += " SORT BY date_time DESC"
+
+    return services.get_summary_data(query, tuple(parameters), start_of_month, formatted_str)
