@@ -42,7 +42,7 @@ def get_expenses(
         query += " AND description LIKE ?"
         parameters.append(f"%{search}%")
 
-    query += " SORT BY date_time DESC"
+    query += " ORDER BY date_time DESC"
 
     return services.get_expenses(query = query, param = tuple(parameters))
 
@@ -58,13 +58,14 @@ def patch_expense(expense_id: int, request: models.PatchExpense):
     parameters = []
 
     for attr, value in vars(request).items():
+        if parameters:
+            query += ","
         if value:
-            query += " ? = ?,"
-            parameters.append(attr)
+            query += f" {attr} = ?"
             parameters.append(value)
 
     if not parameters:
-        HTTPException(
+        raise HTTPException(
             status_code=400,
             detail="No changes attributed!"
         )
@@ -88,7 +89,7 @@ def get_categories():
 @app.post("/categories")
 def post_categories(new_category: models.NewCategory):
     if services.check_category(new_category) == 1:
-        HTTPException(
+        raise HTTPException(
             status_code=409,
             detail="Category already exists!"
         )
@@ -130,6 +131,6 @@ def summary(
         query += " AND category_id = ?"
         parameters.append(category_id)
 
-    query += " SORT BY date_time DESC"
+    query += " ORDER BY date_time DESC"
 
     return services.get_summary_data(query, tuple(parameters), start_of_month, formatted_str)

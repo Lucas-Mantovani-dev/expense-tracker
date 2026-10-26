@@ -66,7 +66,7 @@ def get_expenses(query, param):
         request_response.append(expense_response(expense[0], expense[1], expense[2], expense[3], expense[4]))
 
     if not request_response:
-        HTTPException(
+        raise HTTPException(
             status_code=404,
             detail="No expenses found!"
         )
@@ -82,7 +82,7 @@ def get_expense(expense_id):
     response = cursor.fetchone()
 
     if not response:
-        HTTPException(
+        raise HTTPException(
             status_code=404,
             detail="Expense not found!"
         )
@@ -108,7 +108,7 @@ def delete_expense(expense_id: int):
     check_exist = cursor.fetchone()
 
     if not check_exist:
-        HTTPException(
+        raise HTTPException(
             status_code=404,
             detail="Expense not found!"
         )
@@ -131,7 +131,7 @@ def get_categories():
     categories = []
 
     if not response:
-        HTTPException(
+        raise HTTPException(
             status_code=404,
             detail="No category to be shown..."
         )
