@@ -1,10 +1,11 @@
-import database
+import database, sqlite3
 from datetime import datetime, timedelta
 from fastapi import HTTPException
 
 def get_category(category_id: int):
     database.db_init_tables()
-    cursor = database.db_init()
+    conn = sqlite3.connect("system.db")
+    cursor = conn.cursor()
 
     cursor.execute(
         """SELECT * FROM categories WHERE category_id = ?""",
@@ -30,15 +31,16 @@ def expense_response(id: int, amount: float, category_id: int, description: str,
 def create_expense(request):
     now = datetime.now()
     formatted_str = now.strftime("%Y-%m-%d %H:%M:%S")
-    cursor = database.db_init()
     database.db_init_tables()
+    conn = sqlite3.connect("system.db")
+    cursor = conn.cursor()
 
     cursor.execute(
         """INSERT INTO expenses (amount, category_id, description, date_time)
         VALUES (?, ?, ?, ?)""", (request.amount, request.category_id, request.description, formatted_str)
     )
 
-    database.db_commit()
+    conn.commit()
 
     cursor.execute(
         """SELECT expense_id FROM expenses WHERE amount = ? AND category_id = ? AND description = ? AND date_time = ?""",
@@ -52,7 +54,8 @@ def create_expense(request):
 
 def get_expenses(query, param):
     database.db_init_tables()
-    cursor = database.db_init()
+    conn = sqlite3.connect("system.db")
+    cursor = conn.cursor()
 
     cursor.execute(query, param)
 
@@ -72,7 +75,8 @@ def get_expenses(query, param):
 
 def get_expense(expense_id):
     database.db_init_tables()
-    cursor = database.db_init()
+    conn = sqlite3.connect("system.db")
+    cursor = conn.cursor()
 
     cursor.execute("SELECT * FROM expenses WHERE expense_id = ?", (expense_id,))
     response = cursor.fetchone()
@@ -87,16 +91,18 @@ def get_expense(expense_id):
 
 def patch_expense(query, param, expense_id: int):
     database.db_init_tables()
-    cursor = database.db_init()
+    conn = sqlite3.connect("system.db")
+    cursor = conn.cursor()
 
     cursor.execute(query, param)
-    database.db_commit()
+    conn.commit()
 
     return get_expense(expense_id)
 
 def delete_expense(expense_id: int):
     database.db_init_tables()
-    cursor = database.db_init()
+    conn = sqlite3.connect("system.db")
+    cursor = conn.cursor()
 
     cursor.execute("SELECT * FROM expenses WHERE expense_id = ?", (expense_id,))
     check_exist = cursor.fetchone()
@@ -108,7 +114,7 @@ def delete_expense(expense_id: int):
         )
     else:
         cursor.execute("DELETE FROM expenses WHERE expense_id = ?", (expense_id,))
-        database.db_commit()
+        conn.commit()
 
         return {
             "expense_id": expense_id,
@@ -117,7 +123,8 @@ def delete_expense(expense_id: int):
 
 def get_categories():
     database.db_init_tables()
-    cursor = database.db_init()
+    conn = sqlite3.connect("system.db")
+    cursor = conn.cursor()
 
     cursor.execute("SELECT * FROM categories")
     response = cursor.fetchall()
@@ -141,7 +148,8 @@ def get_categories():
 
 def check_category(category_name):
     database.db_init_tables()
-    cursor = database.db_init()
+    conn = sqlite3.connect("system.db")
+    cursor = conn.cursor()
 
     cursor.execute("SELECT * FROM categories WHERE name = ?", (category_name,))
 
@@ -153,13 +161,14 @@ def check_category(category_name):
 
 def create_category(category_name):
     database.db_init_tables()
-    cursor = database.db_init()
+    conn = sqlite3.connect("system.db")
+    cursor = conn.cursor()
 
     cursor.execute(
         """INSERT INTO categories (name)
         VALUES (?)""", (category_name,)
     )
-    database.db_commit()
+    conn.commit()
 
     cursor.execute("SELECT * FROM catgeories WHERE category_name = ?", (category_name,))
 
@@ -172,7 +181,8 @@ def create_category(category_name):
 
 def get_month_data(sotm, now):
     database.db_init_tables()
-    cursor = database.db_init()
+    conn = sqlite3.connect("system.db")
+    cursor = conn.cursor()
     cursor.execute(
         """SELECT amount FROM expenses WHERE date_time >= ? AND date_time < ?""",
         (sotm, now)
@@ -193,7 +203,8 @@ def get_month_data(sotm, now):
 
 def get_week_data(now):
     database.db_init_tables()
-    cursor = database.db_init()
+    conn = sqlite3.connect("system.db")
+    cursor = conn.cursor()
     today = datetime.now()
     sunday_start = today - timedelta(days=(today.weekday() + 1) % 7)
     week_start = sunday_start.strftime('%Y-%m-%d')
@@ -222,7 +233,8 @@ def get_summary_data(
         sotm, now
 ):
     database.db_init_tables()
-    cursor = database.db_init()
+    conn = sqlite3.connect("system.db")
+    cursor = conn.cursor()
 
     cursor.execute(query, param)
     response = cursor.fetchall() # LIST WITH AMOUNT TUPLES

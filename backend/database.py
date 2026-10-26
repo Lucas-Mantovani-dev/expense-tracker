@@ -1,15 +1,8 @@
 import sqlite3
 
-def db_init():
-    conn = sqlite3.connect("system.db")
-    return conn.cursor()
-
-def db_commit():
-    conn = sqlite3.connect("system.db")
-    conn.commit()
-
 def db_init_tables():
-    cursor = db_init()
+    conn = sqlite3.connect("system.db")
+    cursor = conn.cursor()
 
     cursor.execute(
         """CREATE TABLE IF NOT EXISTS categories (
@@ -29,5 +22,4 @@ def db_init_tables():
         REFERENCES categories(category_id))"""
     )
 
-    db_commit()
-
+    conn.commit()
