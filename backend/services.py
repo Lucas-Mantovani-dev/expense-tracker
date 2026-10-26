@@ -1,5 +1,6 @@
 import database
 from datetime import datetime
+from fastapi import HTTPException
 
 def get_category(category_id: int):
     database.db_init_tables()
@@ -55,4 +56,41 @@ def get_expenses(query, param):
 
     cursor.execute(query, param)
 
-    return cursor.fetchall()
+    response = cursor.fetchall()
+    request_response = []
+
+    for expense in response:
+        request_response.append(expense_response(expense[0], expense[1], expense[2], expense[3], expense[4]))
+
+    if not request_response:
+        HTTPException(
+            status_code=404,
+            detail="No expenses found!"
+        )
+    else:
+        return request_response
+
+def get_expense(expense_id):
+    database.db_init_tables()
+    cursor = database.db_init()
+
+    cursor.execute("SELECT * FROM expenses WHERE expense_id = ?", (expense_id,))
+    response = cursor.fetchone()
+
+    if not response:
+        HTTPException(
+            status_code=404,
+            detail="Expense not found!"
+        )
+    else:
+        return expense_response(response[0], response[1], response[2], response[3], response[4])
+
+def patch_expense(query, param, expense_id: int):
+    database.db_init_tables()
+    cursor = database.db_init()
+
+    cursor.execute(query, param)
+    database.db_commit()
+
+    return get_expense(expense_id)
+

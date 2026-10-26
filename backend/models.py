@@ -5,3 +5,8 @@ class NewExpense(BaseModel):
     category_id: int
     description: str
 
+class PatchExpense(BaseModel):
+    amount: float | None = None
+    category_id: int | None = None
+    description: str | None = None
+
