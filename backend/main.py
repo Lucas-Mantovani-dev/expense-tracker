@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from datetime import datetime, date
-import models, services
+from backend import models, services
 
 app = FastAPI()
 
@@ -58,9 +58,10 @@ def patch_expense(expense_id: int, request: models.PatchExpense):
     parameters = []
 
     for attr, value in vars(request).items():
-        if parameters:
-            query += ","
-        if value:
+        if value is not None:
+            if parameters:
+                query += ","
+
             if attr == "amount":
                 if value <= 0:
                     raise HTTPException(
@@ -107,7 +108,7 @@ def post_categories(new_category: models.NewCategory):
             detail="Category already exists!"
         )
     else:
-        return services.create_category(new_category)
+        return services.create_category(new_category.name)
 
 # RETRIEVES A SUMMARY
 @app.get("/summary")

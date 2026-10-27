@@ -1,4 +1,5 @@
-import database, sqlite3
+from backend import database
+import sqlite3
 from datetime import datetime, timedelta
 from fastapi import HTTPException
 
@@ -7,17 +8,23 @@ def get_category(category_id: int):
     conn = sqlite3.connect("system.db")
     cursor = conn.cursor()
 
-    cursor.execute(
-        """SELECT * FROM categories WHERE category_id = ?""",
-        (category_id,)
-    )
+    if check_category(category_id=category_id) == 0:
+        raise HTTPException(
+            status_code=404,
+            detail="Category not found!"
+        )
+    else:
+        cursor.execute(
+            """SELECT * FROM categories WHERE category_id = ?""",
+            (category_id,)
+        )
 
-    response = cursor.fetchone()
+        response = cursor.fetchone()
 
-    return {
-        "category_id": response[0],
-        "name": response[1]
-    }
+        return {
+            "category_id": response[0],
+            "name": response[1]
+        }
 
 def expense_response(id: int, amount: float, category_id: int, description: str, date_time: str):
     return {
@@ -35,22 +42,28 @@ def create_expense(request):
     conn = sqlite3.connect("system.db")
     cursor = conn.cursor()
 
-    cursor.execute(
-        """INSERT INTO expenses (amount, category_id, description, date_time)
-        VALUES (?, ?, ?, ?)""", (request.amount, request.category_id, request.description, formatted_str)
-    )
+    if check_category(category_id=request.category_id) == 0:
+        raise HTTPException(
+            status_code=404,
+            detail="Category not found!"
+        )
+    else:
+        cursor.execute(
+            """INSERT INTO expenses (amount, category_id, description, date_time)
+            VALUES (?, ?, ?, ?)""", (request.amount, request.category_id, request.description, formatted_str)
+        )
 
-    conn.commit()
+        conn.commit()
 
-    cursor.execute(
-        """SELECT expense_id FROM expenses WHERE amount = ? AND category_id = ? AND description = ? AND date_time = ?""",
-        (request.amount, request.category_id, request.description, formatted_str)
-    )
+        cursor.execute(
+            """SELECT expense_id FROM expenses WHERE amount = ? AND category_id = ? AND description = ? AND date_time = ?""",
+            (request.amount, request.category_id, request.description, formatted_str)
+        )
 
-    expense_id = cursor.fetchone()
-    expense_id = expense_id[0]
+        expense_id = cursor.fetchone()
+        expense_id = expense_id[0]
 
-    return expense_response(expense_id, request.amount, request.category_id, request.description, formatted_str)
+        return expense_response(expense_id, request.amount, request.category_id, request.description, formatted_str)
 
 def get_expenses(query, param):
     database.db_init_tables()
@@ -165,7 +178,7 @@ def check_category(
     else:
         return 0 #CATEGORY DOESNT EXIST
 
-def create_category(category_name):
+def create_category(category_name: str):
     database.db_init_tables()
     conn = sqlite3.connect("system.db")
     cursor = conn.cursor()

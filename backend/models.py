@@ -3,7 +3,7 @@ from pydantic import BaseModel
 class NewExpense(BaseModel):
     amount: float
     category_id: int
-    description: str
+    description: str | None = None
 
 class PatchExpense(BaseModel):
     amount: float | None = None
