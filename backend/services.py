@@ -146,18 +146,24 @@ def get_categories():
 
         return categories
 
-def check_category(category_name):
+def check_category(
+        category_name: str | None = None,
+        category_id: int | None = None
+):
     database.db_init_tables()
     conn = sqlite3.connect("system.db")
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM categories WHERE name = ?", (category_name,))
+    if category_name:
+        cursor.execute("SELECT * FROM categories WHERE name = ?", (category_name,))
+    elif category_id:
+        cursor.execute("SELECT * FROM categories WHERE category_id = ?", (category_id,))
 
     response = cursor.fetchone()
     if response:
-        return 1
+        return 1 #CATEGORY EXISTS
     else:
-        return 0
+        return 0 #CATEGORY DOESNT EXIST
 
 def create_category(category_name):
     database.db_init_tables()
@@ -170,7 +176,7 @@ def create_category(category_name):
     )
     conn.commit()
 
-    cursor.execute("SELECT * FROM catgeories WHERE category_name = ?", (category_name,))
+    cursor.execute("SELECT * FROM categories WHERE name = ?", (category_name,))
 
     response = cursor.fetchone()
 
@@ -195,10 +201,15 @@ def get_month_data(sotm, now):
         amount_count += 1
         amount_spent += amount[0]
 
+    if amount_count <= 0:
+        average = 0
+    else:
+        average = round((amount_spent/amount_count), 2)
+    
     return {
         "total_spent": amount_spent,
         "expense_count": amount_count,
-        "average_expense": round((amount_spent/amount_count), 2)
+        "average_expense": average
     }
 
 def get_week_data(now):
@@ -221,10 +232,15 @@ def get_week_data(now):
         amount_count += 1
         amount_spent += amount[0]
 
+    if amount_count <= 0:
+        average = 0
+    else:
+        average = round((amount_spent/amount_count), 2)
+
     return {
         "total_spent": amount_spent,
         "expense_count": amount_count,
-        "average_expense": round((amount_spent/amount_count), 2)
+        "average_expense": average
     }
 
 def get_summary_data(
@@ -244,11 +260,16 @@ def get_summary_data(
         amount_count += 1
         amount_spent += amount[0]
 
+    if amount_count <= 0:
+        average = 0
+    else:
+        average = round((amount_spent/amount_count), 2)
+
     return {
         "filtered_data": {
             "total_spent": amount_spent,
             "expense_count": amount_count,
-            "average_expense": round((amount_spent/amount_count), 2)
+            "average_expense": average
         },
         "month_data": get_month_data(sotm, now),
         "week_data": get_week_data(now)

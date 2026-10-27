@@ -61,6 +61,19 @@ def patch_expense(expense_id: int, request: models.PatchExpense):
         if parameters:
             query += ","
         if value:
+            if attr == "amount":
+                if value <= 0:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Invalid amount!"
+                    )
+            if attr == "category_id":
+                if services.check_category(category_id=value) == 0:
+                    raise HTTPException(
+                        status_code=404,
+                        detail="Category not found!"
+                    )
+
             query += f" {attr} = ?"
             parameters.append(value)
 
@@ -88,7 +101,7 @@ def get_categories():
 # CREATE NEW CATEGORY
 @app.post("/categories")
 def post_categories(new_category: models.NewCategory):
-    if services.check_category(new_category) == 1:
+    if services.check_category(category_name=new_category.name) == 1:
         raise HTTPException(
             status_code=409,
             detail="Category already exists!"
